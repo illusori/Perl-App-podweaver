@@ -32,10 +32,9 @@ use CPAN::Meta;
 my $help    = 0;
 my $man     = 0;
 
-my $verbose = 0;
+my $verbose          = 0;
 my $write_to_dot_new = 0;
-my @files   = ();
-
+my $no_backup        = 0;
 
 Getopt::Long::Configure( 'gnu_getopt' );
 Getopt::Long::GetOptions(
@@ -43,6 +42,7 @@ Getopt::Long::GetOptions(
     'man'                     => \$man,
     'verbose|v+'              => \$verbose,
     'new'                     => \$write_to_dot_new,
+    'nobackup'                => \$no_backup,
     ) or pod2usage( 2 );
 
 pod2usage( 1 ) if $help;
@@ -162,7 +162,7 @@ sub build_weaver
 build_dist_info();
 build_weaver();
 
-@files = ();
+my @files = ();
 
 File::Find::find(
     {
@@ -259,7 +259,7 @@ foreach my $module_file ( @files )
         ( $module_file . '.new' ) : $module_file;
     my $backup_file = $module_file . '.bak';
 
-    unless( $write_to_dot_new )
+    unless( $write_to_dot_new or $no_backup )
     {
         unlink( $backup_file );
         copy( $module_file, $backup_file );
@@ -299,6 +299,7 @@ podweaver [options]
  Options:
    -v, --verbose     increase verbosity
    --new             write to *.new files rather than overwriting existing
+   --nobackup        skip generating *.bak files when editing files
    --help            brief help message
    --man             full documentation
 
@@ -314,6 +315,13 @@ overwriting the original.
 
 When B<--new> is supplied, no *.bak backup of the original is created (since
 the original is left untouched.)
+
+=item B<--nobackup>
+
+Skips the production of *.bak backups for any changed files.
+Be warned, this could result in loss of the file contents if anything goes
+wrong, use with caution. (Or better still, use with your changes safely
+commited to the VCS of your choice.)
 
 =item B<-v>, B<--verbose>
 
