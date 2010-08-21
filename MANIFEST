@@ -1,0 +1,14 @@
+Build.PL
+Changes
+ignore.txt
+lib/App/podweaver.pm
+MANIFEST
+META.yml
+README
+script/podweaver
+t/00-load.t
+t/boilerplate.t
+t/manifest.t
+t/pod-coverage.t
+t/pod.t
+weaver.ini

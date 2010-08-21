@@ -1,0 +1,52 @@
+App-podweaver
+
+App::podweaver provides a mechanism to run Pod::Weaver over the files
+within a distribution, without needing to use Dist::Zilla.
+
+Where Dist::Zilla works on a copy of your source code, App::podweaver
+is intended to modify your source code directly, and as such it is highly
+recommended that you use the Pod::Weaver::PluginBundle::ReplaceBoilerplate
+plugin bundle so that you over-write existing POD sections, instead of the
+default Pod::Weaver behaviour of repeatedly appending.
+
+INSTALLATION
+
+To install this module, run the following commands:
+
+	perl Build.PL
+	./Build
+	./Build test
+	./Build install
+
+SUPPORT AND DOCUMENTATION
+
+After installing, you can find documentation for this module with the
+perldoc command.
+
+    perldoc App::podweaver
+
+You can also look for information at:
+
+    RT, CPAN's request tracker
+        http://rt.cpan.org/NoAuth/Bugs.html?Dist=App-podweaver
+
+    AnnoCPAN, Annotated CPAN documentation
+        http://annocpan.org/dist/App-podweaver
+
+    CPAN Ratings
+        http://cpanratings.perl.org/d/App-podweaver
+
+    Search CPAN
+        http://search.cpan.org/dist/App-podweaver/
+
+
+LICENSE AND COPYRIGHT
+
+Copyright (C) 2010 Sam Graham
+
+This program is free software; you can redistribute it and/or modify it
+under the terms of either: the GNU General Public License as published
+by the Free Software Foundation; or the Artistic License.
+
+See http://dev.perl.org/licenses/ for more information.
+
