@@ -35,6 +35,7 @@ my $man     = 0;
 my $verbose          = 0;
 my $write_to_dot_new = 0;
 my $no_backup        = 0;
+my $antispam         = '';
 
 Getopt::Long::Configure( 'gnu_getopt' );
 Getopt::Long::GetOptions(
@@ -43,6 +44,7 @@ Getopt::Long::GetOptions(
     'verbose|v+'              => \$verbose,
     'new'                     => \$write_to_dot_new,
     'nobackup'                => \$no_backup,
+    'antispam=s'              => \$antispam,
     ) or pod2usage( 2 );
 
 pod2usage( 1 ) if $help;
@@ -96,6 +98,13 @@ sub build_dist_info
     if( $meta )
     {
         @authors = $meta->authors();
+
+use Data::Dumper;
+print "Authors is: " . Data::Dumper::Dumper( \@authors ) . "\n";
+
+        @authors = map { s/\@/ $antispam /; $_; } @authors if $antispam;
+
+print "Authors becomes: " . Data::Dumper::Dumper( \@authors ) . "\n";
 
         show( 'detail', "Creating license object\n" );
         my @licenses = $meta->licenses();
@@ -300,6 +309,7 @@ podweaver [options]
    -v, --verbose     increase verbosity
    --new             write to *.new files rather than overwriting existing
    --nobackup        skip generating *.bak files when editing files
+   --antispam=str    replace @ in author emails with 'str'.
    --help            brief help message
    --man             full documentation
 
@@ -322,6 +332,13 @@ Skips the production of *.bak backups for any changed files.
 Be warned, this could result in loss of the file contents if anything goes
 wrong, use with caution. (Or better still, use with your changes safely
 commited to the VCS of your choice.)
+
+=item B<--antispam=>I<string>
+
+Replaces the @ in author email addresses with the supplied string as an
+anti-spam measure.
+Given that the original email is still within the META.yml, this will not
+prevent all spam harvesting, but it may at least help.
 
 =item B<-v>, B<--verbose>
 
