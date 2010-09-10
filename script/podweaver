@@ -158,7 +158,7 @@ sub build_weaver
     }
     else
     {
-        show( 'detail', "Initializing weaver with defaults (no ./weaver.ini found)\n" );
+        warn "No ./weaver.ini found, using Pod::Weaver defaults, this will most likely insert duplicate sections";
         $weaver = Pod::Weaver->new_with_default_config();
     }
 }
