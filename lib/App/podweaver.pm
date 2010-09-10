@@ -132,11 +132,11 @@ L<http://search.cpan.org/dist/App-podweaver/>
 
 =head1 AUTHOR
 
-Sam Graham <libapp-podweaver-perl@illusori.co.uk>
+Sam Graham <libapp-podweaver-perl BLAHBLAH illusori.co.uk>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is copyright (c) 2010 by Sam Graham <libapp-podweaver-perl@illusori.co.uk>.
+This software is copyright (c) 2010 by Sam Graham <libapp-podweaver-perl BLAHBLAH illusori.co.uk>.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
