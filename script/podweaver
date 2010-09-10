@@ -99,12 +99,7 @@ sub build_dist_info
     {
         @authors = $meta->authors();
 
-use Data::Dumper;
-print "Authors is: " . Data::Dumper::Dumper( \@authors ) . "\n";
-
         @authors = map { s/\@/ $antispam /; $_; } @authors if $antispam;
-
-print "Authors becomes: " . Data::Dumper::Dumper( \@authors ) . "\n";
 
         show( 'detail', "Creating license object\n" );
         my @licenses = $meta->licenses();
