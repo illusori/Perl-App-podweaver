@@ -220,7 +220,10 @@ foreach my $module_file ( @files )
     my $pod_str = join "\n", @pod_tokens;
     my $pod_document = Pod::Elemental->read_string( $pod_str );
 
-    Pod::Elemental::Transformer::Pod5->new->transform_node( $pod_document );
+#  TODO: This _really_ doesn't like being run twice on a document with
+#  TODO: regions for some reason.  Comment out for now and trust they
+#  TODO: have [@CorePrep] enabled.
+#    Pod::Elemental::Transformer::Pod5->new->transform_node( $pod_document );
 
     my %weave_args = (
         pod_document => $pod_document,
