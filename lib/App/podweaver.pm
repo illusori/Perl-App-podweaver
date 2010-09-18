@@ -5,7 +5,161 @@ package App::podweaver;
 use warnings;
 use strict;
 
+use Carp;
+use File::Slurp ();
+use Log::Any qw/$log/;
+use Try::Tiny;
+
 our $VERSION = '0.99_01';
+
+sub FAIL()              { 0; }
+sub SUCCESS_UNCHANGED() { 1; }
+sub SUCCESS_CHANGED()   { 1; }
+
+sub weave_file
+{
+    my ( $self, %input ) = @_;
+    my ( $file, $no_backup, $write_to_dot_new );
+    my ( $perl, $ppi_document, $pod_after_end, @pod_tokens, $pod_str,
+         $pod_document, %weave_args, $new_pod, $end, $new_perl,
+         $output_file, $backup_file, $fh );
+
+    unless( $file = delete $input{ file } )
+    {
+        $log->errorf( 'Missing file parameter in args %s', \%input )
+            if $log->is_error();
+        return( FAIL );
+    }
+    $no_backup        = delete $input{ no_backup };
+    $write_to_dot_new = delete $input{ new }
+
+    #  From here and below is mostly hacked out from
+    #    Dist::Zilla::Plugin::PodWeaver
+
+    $perl = File::Slurp::read_file( $file );
+
+    unless( $ppi_document = PPI::Document->new( \$perl ) )
+    {
+        $log->errorf( "PPI error in '%s': %s", $file, PPI::Document->errstr() )
+            if $log->is_error();
+        return( FAIL );
+    }
+
+    #  Pod::Weaver::Section::Name croaks if there's no package line.
+    unless( $ppi_document->find_first( 'PPI::Statement::Package' ) )
+    {
+        $log->errorf( "Unable to find package declaration in '%s'", $file )
+            if $log->is_error();
+        return( FAIL );
+    }
+
+    #  If they have some pod after __END__ then assume it's safe to put
+    #  it all there.
+    $pod_after_end =
+        ( $ppi_document->find( 'PPI::Statement::End' ) and
+          grep { $_->find_first( 'PPI::Token::Pod' ) }
+              @{$ppi_document->find( 'PPI::Statement::End' )} ) ?
+        1 : 0;
+
+    @pod_tokens =
+        map { "$_" } @{ $ppi_document->find( 'PPI::Token::Pod' ) || [] };
+    $ppi_document->prune( 'PPI::Token::Pod' );
+
+    if( $ppi_document->serialize =~ /^=[a-z]/m )
+    {
+        #  TODO: no idea what the problem is here, but DZP::PodWeaver had it...
+        $log->errorf( "Can't do podweave on '%s': " .
+            "there is POD inside string literals", $file )
+            if $log->is_error();
+        return( FAIL );
+    }
+
+    $pod_str = join "\n", @pod_tokens;
+    $pod_document = Pod::Elemental->read_string( $pod_str );
+
+#  TODO: This _really_ doesn't like being run twice on a document with
+#  TODO: regions for some reason.  Comment out for now and trust they
+#  TODO: have [@CorePrep] enabled.
+#    Pod::Elemental::Transformer::Pod5->new->transform_node( $pod_document );
+
+    %weave_args = (
+        %input,
+        pod_document => $pod_document,
+        ppi_document => $ppi_document,
+        filename     => $file,
+        );
+    #  FIXME: erk, not right at all if the module version differs...
+    $weave_args{ version } = $dist_version if $dist_version;
+
+    #  TODO: Try::Tiny this, it can croak.
+    try
+    {
+        $pod_document = $weaver->weave_document( \%weave_args );
+
+        $log->errorf( "weave_document() failed on '%s': No Pod generated",
+            $file )
+            if $log->is_error() and not $pod_document;
+    }
+    catch
+    {
+        $log->errorf( "weave_document() failed on '%s': %s",
+            $file, $_ )
+            if $log->is_error();
+        $pod_document = undef;
+    };
+    return( FAIL ) unless $pod_document;
+
+    $new_pod = $pod_document->as_pod_string;
+
+    $end = do {
+        my $end_elem = $ppi_document->find( 'PPI::Statement::Data' )
+                    || $ppi_document->find( 'PPI::Statement::End' );
+        join q{}, @{ $end_elem || [] };
+        };
+
+    $ppi_document->prune( 'PPI::Statement::End' );
+    $ppi_document->prune( 'PPI::Statement::Data' );
+
+    $new_perl = $ppi_document->serialize;
+    $new_perl =
+        $end ? ( $pod_after_end ?
+        "$new_perl$end$new_pod" :
+        "$new_perl\n\n$new_pod\n\n$end" ) :
+        "$new_perl\n__END__\n$new_pod\n";
+
+    if( $perl eq $new_perl )
+    {
+        $log->infof( "Contents of '%s' unchanged", $file )
+            if $log->is_info();
+        return( SUCCESS_UNCHANGED );
+    }
+
+    $output_file = $write_to_dot_new ? ( $file . '.new' ) : $file;
+    $backup_file = $file . '.bak';
+
+    unless( $write_to_dot_new or $no_backup )
+    {
+        unlink( $backup_file );
+        copy( $file, $backup_file );
+    }
+
+    $log->debugf( "Writing new '%s' for '%s'", $output_file, $file )
+        if $log->is_debug();
+    #  We want to preserve permissions and other stuff, so we open
+    #  it for read/write.
+    $fh = IO::File->new( $output_file, $write_to_dot_new ? '>' : '+<' );
+    unless( $fh )
+    {
+        $log->errorf( "Unable to write to '%s' for '%s': %s"
+            $output_file, $file, $! )
+            if $log->is_error();
+        return( FAIL );
+    }
+    $fh->truncate( 0 );
+    $fh->print( $new_perl );
+    $fh->close();
+    return( SUCCESS_CHANGED );
+}
 
 1;
 
