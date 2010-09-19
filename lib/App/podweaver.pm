@@ -10,6 +10,7 @@ use IO::File;
 use File::Copy;
 use File::Slurp ();
 use Log::Any qw/$log/;
+use Module::Build::ModuleInfo;
 use Pod::Elemental;
 use Pod::Elemental::Transformer::Pod5;
 use PPI::Document;
@@ -27,7 +28,7 @@ sub weave_file
     my ( $file, $no_backup, $write_to_dot_new );
     my ( $perl, $ppi_document, $pod_after_end, @pod_tokens, $pod_str,
          $pod_document, %weave_args, $new_pod, $end, $new_perl,
-         $output_file, $backup_file, $fh );
+         $output_file, $backup_file, $fh, $module_info );
 
     unless( $file = delete $input{ file } )
     {
@@ -93,10 +94,27 @@ sub weave_file
         ppi_document => $ppi_document,
         filename     => $file,
         );
-    #  FIXME: erk, not right at all if the module version differs...
-    $weave_args{ version } = $dist_version if $dist_version;
 
-    #  TODO: Try::Tiny this, it can croak.
+    $module_info = Module::Build::ModuleInfo->new_from_file( $file );
+    if( $module_info and defined( $module_info->{ version } ) )
+    {
+        $weave_args{ version } = $module_info->{ version };
+    }
+    elsif( defined( $input->{ dist_version } ) )
+    {
+        $log->warningf( "Unable to parse version in '%s', " .
+            "using dist_version '%s'", $file, $input->{ dist_version } )
+            if $log->is_warning();
+        $weave_args{ version } = $input->{ dist_version };
+    }
+    else
+    {
+        $log->warningf( "Unable to parse version in '%s' and " .
+            "no dist_version supplied", $file )
+            if $log->is_warning();
+    }
+
+    #  Try::Tiny this, it can croak.
     try
     {
         $pod_document = $weaver->weave_document( \%weave_args );
