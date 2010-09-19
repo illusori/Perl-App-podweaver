@@ -6,15 +6,20 @@ use warnings;
 use strict;
 
 use Carp;
+use IO::File;
+use File::Copy;
 use File::Slurp ();
 use Log::Any qw/$log/;
+use Pod::Elemental;
+use Pod::Elemental::Transformer::Pod5;
+use PPI::Document;
 use Try::Tiny;
 
 our $VERSION = '0.99_01';
 
 sub FAIL()              { 0; }
 sub SUCCESS_UNCHANGED() { 1; }
-sub SUCCESS_CHANGED()   { 1; }
+sub SUCCESS_CHANGED()   { 2; }
 
 sub weave_file
 {
