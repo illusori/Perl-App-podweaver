@@ -17,6 +17,15 @@ provides:
   App::podweaver:
     file: lib/App/podweaver.pm
     version: 0.99_01
+requires:
+  File::Slurp: 0
+  IO::File: 0
+  Log::Any: 0
+  PPI::Document: 0
+  Pod::Elemental: 0
+  Pod::Elemental::Transformer::Pod5: 0
+  Pod::Weaver: 0
+  Try::Tiny: 0
 resources:
   license: http://dev.perl.org/licenses/
 version: 0.99_01

@@ -11,6 +11,16 @@ my $builder = Module::Build->new(
     build_requires => {
         'Test::More' => 0,
     },
+    requires => {
+        'Pod::Weaver' => 0,
+        'File::Slurp' => 0,
+        'IO::File'    => 0,
+        'Log::Any'    => 0,
+        'Pod::Elemental' => 0,
+        'Pod::Elemental::Transformer::Pod5' => 0,
+        'PPI::Document'  => 0,
+        'Try::Tiny'   => 0,
+    },
     add_to_cleanup      => [ 'App-podweaver-*' ],
     sign => 1,
     dynamic_config => 0,
