@@ -66,10 +66,6 @@ __END__
 
 podweaver - Run Pod::Weaver on a file or distribution.
 
-=head1 VERSION
-
-version 0.99_01
-
 =head1 SYNOPSIS
 
 podweaver [options]
