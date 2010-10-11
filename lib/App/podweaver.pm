@@ -17,6 +17,7 @@ use Log::Any qw/$log/;
 use Module::Build::ModuleInfo;
 use Pod::Elemental;
 use Pod::Elemental::Transformer::Pod5;
+use Pod::Weaver;
 use PPI::Document;
 use Try::Tiny;
 
