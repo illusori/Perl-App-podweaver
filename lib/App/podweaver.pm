@@ -326,9 +326,32 @@ sub find_files_to_weave
 {
     return(
         File::Find::Rule->ignore_vcs
+                        ->not_name( qr/~$/ )
                         ->perl_file
                         ->in( grep { -d $_ } qw/lib bin script/ )
         );
+}
+
+sub weave_distribution
+{
+    my ( $self, %options ) = @_;
+    my ( $weaver, $dist_info );
+
+    $dist_info = $self->get_dist_info( %options );
+    $weaver    = $self->get_weaver( %options );
+
+    foreach my $file ( $self->find_files_to_weave() )
+    {
+        $log->noticef( "Weaving file '%s'", $file )
+            if $log->is_notice();
+
+        $self->weave_file(
+            %options,
+            %{$dist_info},
+            filename => $file,
+            weaver   => $weaver,
+            );
+    }
 }
 
 1;
