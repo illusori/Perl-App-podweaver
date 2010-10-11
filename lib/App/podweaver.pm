@@ -298,7 +298,7 @@ sub get_dist_info
             holder => join( ' & ', @{$dist_info->{ authors }} ),
             } );
 
-        $log->debugf( "Using license: '%s'", $license->name() )
+        $log->debugf( "Using license: '%s'", $dist_info->{ license }->name() )
             if $log->is_debug();
 
         $dist_info->{ dist_version } = $dist_info->{ meta }->version();
