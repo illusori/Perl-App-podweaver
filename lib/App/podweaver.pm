@@ -41,9 +41,14 @@ sub weave_file
             if $log->is_error();
         return( FAIL );
     }
+    unless( $weaver = delete $input{ weaver } )
+    {
+        $log->errorf( 'Missing weaver parameter in args %s', \%input )
+            if $log->is_error();
+        return( FAIL );
+    }
     $no_backup        = delete $input{ no_backup };
     $write_to_dot_new = delete $input{ new };
-    $weaver           = delete $input{ weaver };
 
     #  From here and below is mostly hacked out from
     #    Dist::Zilla::Plugin::PodWeaver
@@ -388,7 +393,7 @@ C<weaver.ini> file in the root directory of your distribution.
 Since the META.json/yml file is often generated with an abstract extracted
 from the POD, and L<App::podweaver> expects a valid META file for
 some of the information to insert into the POD, there's a chicken-and-egg
-situation.
+situation on the first invocation of either.
 
 Running L<App::podweaver> first should produce a POD with an abstract
 line populated from your C<< # ABSTRACT: >> header, but without additional
@@ -410,6 +415,95 @@ L<App::podweaver> again to produce the missing sections:
 This should only be neccessary on newly created distributions as
 both the META and the neccessary POD abstract should be present
 subsequently.
+
+=head1 METHODS
+
+=head2 I<$success> = B<< App::podweaver->weave_file( >> I<%options> B<)>
+
+Runs L<Pod::Weaver> on the given file, merges the generated Pod back
+into the appropriate place and writes the new file out.
+
+C<< App::podweaver->weave_file() >> returns
+C<< App::podweaver::FAIL >> on failure,
+and either C<< App::podweaver::SUCCESS_UNCHANGED >> or
+C<< App::podweaver::SUCCESS_CHANGED >> on success,
+depending on whether changes needed to be made as a result of
+the weaving.
+
+The following options configure C<< App::podweaver->weave_file() >>:
+
+=over
+
+=item B<< filename => >> I<$filename> (required)
+
+The filename of the file to weave.
+
+=item B<< weaver => >> I<$weaver> (required)
+
+The L<Pod::Weaver> instance to use for the weaving.
+
+=item B<< no_backup => >> I<0> | I<1> (default: 0)
+
+If set to a true value, no backup will be made of the original file.
+
+=item B<< new => >> I<0> | I<1> (default: 0)
+
+If set to a true value, the modified file will be written to the
+original filename with C<.new> appended, rather than overwriting
+the original.
+
+=item B<< dist_version => >> I<$version>
+
+If no C<$VERSION> can be parsed from the file by
+L<Module::Build::ModuleInfo>, the version supplied in
+C<dist_version> will be used as a fallback.
+
+=back
+
+Any additional options are passed untouched to L<Pod::Weaver>.
+
+=head2 I<$dist_info> = B<< App::podweaver->get_dist_info( >> I<%options> B<)>
+
+Attempts to extract the information needed by L<Pod::Weaver>
+about the distribution found in the current working directory.
+
+It does this by examining any C<META.json> or C<META.yml> file
+it finds, and by expanding various fields found within.
+
+Valid options are:
+
+=over
+
+=item B<< antispam => >> I<$string>
+
+If set, any @ sign in author emails will be replaced by a space,
+the given string, and a further space, in an attempt to confuse
+spammers.
+
+For example C<< antispam => 'NOSPAM' >> will transform an email
+of C<< nobody@127.0.0.1 >> into C<< nobody NOSPAM 127.0.0.1 >>.
+
+=back
+
+=head2 I<$weaver> = B<< App::podweaver->get_weaver( >> I<%options> B<)>
+
+Builds a L<Pod::Weaver> instance, attemping to find a C<weaver.ini>
+in the current working directory.
+
+At present any options supplied in I<%options> are ignored.
+
+=head2 I<@files> = B<< App::podweaver->find_files_to_weave() >>
+
+Invokes L<File::Find::Rule>, L<File::Find::Rule::VCS> and
+L<File::Find::Rule::Perl> to return a list of perl files that are
+candidates to run L<Pod::Weaver> on in the C<lib>, C<bin> and C<script>
+dirs of the current working directory.
+
+=head2 B<< App::podweaver->weave_distribution( >> I<%options> B<)>
+
+Rolls all the other methods together to run L<Pod::Weaver> on the
+appropriate files within the distribution found in the current
+working directory.
 
 =head1 KNOWN ISSUES AND BUGS
 
