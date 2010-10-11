@@ -13,38 +13,31 @@ use lib "$FindBin::Bin/../../../Pod-Weaver-PluginBundle-ReplaceBoilerplate/src/l
 
 use Getopt::Long;
 use Pod::Usage;
+use Log::Any::Adaptor;
 
-use File::Find;
-use File::Slurp;
-use File::Copy;
-
-use PPI::Document;
-
-use Pod::Elemental;
-use Pod::Elemental::Transformer::Pod5;
-
-use Pod::Weaver;
-
-use CPAN::Meta;
+use App::podweaver;
 
 # ---------------------------------------------------------------------------
 
 my $help    = 0;
 my $man     = 0;
 
+my %options = (
+    new       => 0,
+    no_backup => 0,
+    antispam  => '',
+    );
+
 my $verbose          = 0;
-my $write_to_dot_new = 0;
-my $no_backup        = 0;
-my $antispam         = '';
 
 Getopt::Long::Configure( 'gnu_getopt' );
 Getopt::Long::GetOptions(
     'help|?|h'                => \$help,
     'man'                     => \$man,
     'verbose|v+'              => \$verbose,
-    'new'                     => \$write_to_dot_new,
-    'nobackup'                => \$no_backup,
-    'antispam=s'              => \$antispam,
+    'new'                     => \$options{ new },
+    'nobackup'                => \$options{ no_backup },
+    'antispam=s'              => \$options{ antispam },
     ) or pod2usage( 2 );
 
 pod2usage( 1 ) if $help;
@@ -52,239 +45,13 @@ pod2usage( -exitstatus => 0, -verbose => 2 ) if $man;
 
 # ---------------------------------------------------------------------------
 
-my %levels = (
-    'detail' => 3,
-    'cmd'    => 3,
-    'data'   => 0,
-    'action' => 0,
-    'less'   => 0,
+Log::Any::Adapter->set( 'Dispatch',
+    outputs => [
+        [ 'Screen', min_level => 'notice', ],
+        ],
     );
 
-sub show($$)
-{
-    my ( $level, $message ) = @_;
-
-    print $message if $verbose >= $levels{ $level };
-}
-
-#  TODO: should be from config somewhere.
-my $skip_regexp = qr/(?:\.(?:bak|new)|\~)$/;
-
-# ---------------------------------------------------------------------------
-
-#  META.json bits.
-my ( $meta, $license, @authors, $dist_version );
-
-#  Other objects.
-my ( $weaver );
-
-sub build_dist_info
-{
-    if( -r 'META.json' )
-    {
-        show( 'detail', "Reading META.json\n" );
-        $meta = CPAN::Meta->load_file( 'META.json' );
-    }
-    elsif( -r 'META.yml' )
-    {
-        show( 'detail', "Reading META.yml\n" );
-        $meta = CPAN::Meta->load_file( 'META.yml' );
-    }
-    else
-    {
-        warn "No META.json or META.yml file found, are you running in a distribution directory?\n";
-    }
-
-    if( $meta )
-    {
-        @authors = $meta->authors();
-
-        @authors = map { s/\@/ $antispam /; $_; } @authors if $antispam;
-
-        show( 'detail', "Creating license object\n" );
-        my @licenses = $meta->licenses();
-        die "Pod::Weaver requires one, and only one, license at a time.\n"
-            if @licenses != 1;
-
-        $license = $licenses[ 0 ];
-
-        #  Cribbed from Module::Build, really should be in Software::License.
-        my %licenses = (
-            perl         => 'Perl_5',
-            perl_5       => 'Perl_5',
-            apache       => 'Apache_2_0',
-            apache_1_1   => 'Apache_1_1',
-            artistic     => 'Artistic_1_0',
-            artistic_2   => 'Artistic_2_0',
-            lgpl         => 'LGPL_2_1',
-            lgpl2        => 'LGPL_2_1',
-            lgpl3        => 'LGPL_3_0',
-            bsd          => 'BSD',
-            gpl          => 'GPL_1',
-            gpl2         => 'GPL_2',
-            gpl3         => 'GPL_3',
-            mit          => 'MIT',
-            mozilla      => 'Mozilla_1_1',
-            open_source  => undef,
-            unrestricted => undef,
-            restrictive  => undef,
-            unknown      => undef,
-            );
-        die "Unknown license: $license\n" unless $licenses{ $license };
-        $license = $licenses{ $license };
-
-        my $class = "Software::License::$license";
-        eval "use $class; 1"
-            or die "Can't load Software::License::$license: $@";
-
-        $license = $class->new( {
-            holder => join( ' & ', @authors ),
-            } );
-
-        show( 'detail', "Using license: " . $license->name() . "\n" );
-
-        $dist_version = $meta->version();
-    }
-}
-
-sub build_weaver
-{
-    if( -r 'weaver.ini' )
-    {
-        show( 'detail', "Initializing weaver from ./weaver.ini\n" );
-        $weaver = Pod::Weaver->new_from_config( {
-            root => '',
-            } );
-    }
-    else
-    {
-        warn "No ./weaver.ini found, using Pod::Weaver defaults, this will most likely insert duplicate sections";
-        $weaver = Pod::Weaver->new_with_default_config();
-    }
-}
-
-build_dist_info();
-build_weaver();
-
-my @files = ();
-
-File::Find::find(
-    {
-        wanted   =>
-            sub
-            {
-                return if -d $_ or $_ =~ $skip_regexp;
-                push @files, $_;
-            },
-        no_chdir => 1,
-    },
-    grep { -d $_ } qw/lib bin script/ );
-
-#  TODO: check we found something.
-
-foreach my $module_file ( @files )
-{
-    show( 'action', "Processing $module_file\n" );
-#next;
-
-    #  From here and below is mostly hacked out from
-    #    Dist::Zilla::Plugin::PodWeaver
-
-    my $perl = File::Slurp::read_file( $module_file );
-
-    my $ppi_document = PPI::Document->new(\$perl);
-    warn( PPI::Document->errstr ) unless $ppi_document;
-
-    #  Pod::Weaver::Section::Name croaks if there's no package line.
-    next unless $ppi_document->find_first( 'PPI::Statement::Package' );
-
-    #  If they have some pod after __END__ then assume it's safe to put
-    #  it all there.
-    my $pod_after_end =
-        ( $ppi_document->find( 'PPI::Statement::End' ) and
-          grep { $_->find_first( 'PPI::Token::Pod' ) }
-              @{$ppi_document->find( 'PPI::Statement::End' )} ) ?
-        1 : 0;
-
-    my @pod_tokens =
-        map { "$_" } @{ $ppi_document->find( 'PPI::Token::Pod' ) || [] };
-    $ppi_document->prune( 'PPI::Token::Pod' );
-
-    if( $ppi_document->serialize =~ /^=[a-z]/m )
-    {
-        #  TODO: no idea what the problem is here, but DZP::PodWeaver had it...
-        warn "Can't do podweave on $module_file: there is POD inside string literals";
-        next;
-    }
-
-    my $pod_str = join "\n", @pod_tokens;
-    my $pod_document = Pod::Elemental->read_string( $pod_str );
-
-#  TODO: This _really_ doesn't like being run twice on a document with
-#  TODO: regions for some reason.  Comment out for now and trust they
-#  TODO: have [@CorePrep] enabled.
-#    Pod::Elemental::Transformer::Pod5->new->transform_node( $pod_document );
-
-    my %weave_args = (
-        pod_document => $pod_document,
-        ppi_document => $ppi_document,
-        filename => $module_file,
-        );
-    $weave_args{ license } = $license if $license;
-    #  FIXME: erk, not right at all if the module version differs...
-    $weave_args{ version } = $dist_version if $dist_version;
-    $weave_args{ authors } = \@authors     if @authors;
-
-    #  TODO: Try::Tiny this, it can croak.
-    $pod_document = $weaver->weave_document( \%weave_args );
-
-    my $new_pod = $pod_document->as_pod_string;
-
-    my $end = do {
-        my $end_elem = $ppi_document->find( 'PPI::Statement::Data' )
-                    || $ppi_document->find( 'PPI::Statement::End' );
-        join q{}, @{ $end_elem || [] };
-        };
-
-    $ppi_document->prune( 'PPI::Statement::End' );
-    $ppi_document->prune( 'PPI::Statement::Data' );
-
-    my $new_perl = $ppi_document->serialize;
-    $new_perl =
-        $end ? ( $pod_after_end ?
-        "$new_perl$end$new_pod" :
-        "$new_perl\n\n$new_pod\n\n$end" ) :
-        "$new_perl\n__END__\n$new_pod\n";
-
-    if( $perl eq $new_perl )
-    {
-        show( 'detail', "  Unchanged\n" );
-        next
-    }
-
-    my $output_file = $write_to_dot_new ?
-        ( $module_file . '.new' ) : $module_file;
-    my $backup_file = $module_file . '.bak';
-
-    unless( $write_to_dot_new or $no_backup )
-    {
-        unlink( $backup_file );
-        copy( $module_file, $backup_file );
-    }
-
-    show( 'detail', "  Writing new $output_file\n" );
-    #  We want to preserve permissions and other stuff, so we open
-    #  it for read/write.
-    my $fh = IO::File->new( $output_file, $write_to_dot_new ? '>' : '+<' );
-    unless( $fh )
-    {
-        warn "Unable to write to $output_file: $!";
-        next;
-    }
-    $fh->truncate( 0 );
-    $fh->print( $new_perl );
-    $fh->close();
-}
+App::podweaver->weave_distribution( %options );
 
 #  Fudge to let Pod::Weaver::Section::Name work without dying.
 package podweaver;

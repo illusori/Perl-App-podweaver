@@ -33,6 +33,8 @@ requires:
   File::Slurp: 0
   IO::File: 0
   Log::Any: 0
+  Log::Any::Adapter: 0
+  Log::Any::Adapter::Dispatch: 0
   Module::Build::ModuleInfo: 0
   PPI::Document: 0
   Pod::Elemental: 0
