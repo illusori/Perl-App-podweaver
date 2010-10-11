@@ -6,6 +6,7 @@ use warnings;
 use strict;
 
 use Carp;
+use CPAN::Meta;
 use IO::File;
 use File::Copy;
 use File::Slurp ();
@@ -200,6 +201,106 @@ sub weave_file
     $fh->print( $new_perl );
     $fh->close();
     return( SUCCESS_CHANGED );
+}
+
+sub get_dist_info
+{
+    my ( $self, %options ) = @_;
+
+    my $dist_info = {};
+
+    if( -r 'META.json' )
+    {
+        $log->debug( "Reading META.json" )
+            if $log->is_debug();
+        $dist_info->{ meta } = CPAN::Meta->load_file( 'META.json' );
+    }
+    elsif( -r 'META.yml' )
+    {
+        $log->debug( "Reading META.yml" )
+            if $log->is_debug();
+        $dist_info->{ meta } = CPAN::Meta->load_file( 'META.yml' );
+    }
+    else
+    {
+        $log->warning( "No META.json or META.yml file found, " .
+            "are you running in a distribution directory?" )
+            if $log->is_warning();
+    }
+
+    if( $dist_info->{ meta } )
+    {
+        $dist_info->{ authors } = [ $dist_info->{ meta }->authors() ];
+
+        $dist_info->{ authors } =
+            [ map { s/\@/ $options{ antispam } /; $_; }
+                  @{$dist_info->{ authors }} ]
+            if $options{ antispam };
+
+        $log->debug( "Creating license object" )
+            if $log->is_debug();
+        my @licenses = $dist_info->{ meta }->licenses();
+        if( @licenses != 1 )
+        {
+            $log->error( "Pod::Weaver requires one, and only one, " .
+                "license at a time." )
+                if $log->is_error();
+            return;
+        }
+
+        my $license = $licenses[ 0 ];
+
+        #  Cribbed from Module::Build, really should be in Software::License.
+        my %licenses = (
+            perl         => 'Perl_5',
+            perl_5       => 'Perl_5',
+            apache       => 'Apache_2_0',
+            apache_1_1   => 'Apache_1_1',
+            artistic     => 'Artistic_1_0',
+            artistic_2   => 'Artistic_2_0',
+            lgpl         => 'LGPL_2_1',
+            lgpl2        => 'LGPL_2_1',
+            lgpl3        => 'LGPL_3_0',
+            bsd          => 'BSD',
+            gpl          => 'GPL_1',
+            gpl2         => 'GPL_2',
+            gpl3         => 'GPL_3',
+            mit          => 'MIT',
+            mozilla      => 'Mozilla_1_1',
+            open_source  => undef,
+            unrestricted => undef,
+            restrictive  => undef,
+            unknown      => undef,
+            );
+
+        unless( $licenses{ $license } )
+        {
+            $log->errorf( "Unknown license: '%s'", $license )
+                if $log->is_error();
+            return;
+        }
+
+        $license = $licenses{ $license };
+
+        my $class = "Software::License::$license";
+        unless( eval "use $class; 1" )
+        {
+            $log->errorf( "Can't load Software::License::$license: %s", $@ )
+                if $log->is_error();
+            return;
+        }
+
+        $dist_info->{ license } = $class->new( {
+            holder => join( ' & ', @{$dist_info->{ authors }} ),
+            } );
+
+        $log->debugf( "Using license: '%s'", $license->name() )
+            if $log->is_debug();
+
+        $dist_info->{ dist_version } = $dist_info->{ meta }->version();
+    }
+
+    return( $dist_info );
 }
 
 1;

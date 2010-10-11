@@ -21,6 +21,7 @@ my $builder = Module::Build->new(
         'Software::License::Perl_5' => 0,
     },
     requires => {
+        'CPAN::Meta'  => 0,
         'Pod::Weaver' => 0,
         'File::Slurp' => 0,
         'IO::File'    => 0,

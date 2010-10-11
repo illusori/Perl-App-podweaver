@@ -26,6 +26,7 @@ provides:
     file: lib/App/podweaver.pm
     version: 0.99_01
 requires:
+  CPAN::Meta: 0
   File::Slurp: 0
   IO::File: 0
   Log::Any: 0
