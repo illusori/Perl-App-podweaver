@@ -102,6 +102,8 @@ foreach my $test ( @tests )
     my $original_contents =
         do { local $/; open my $fh, '<', $copied_file; <$fh> };
 
+
+    #  TODO:  check return code.
     App::podweaver->weave_file(
         weaver       => $mock_weaver,
         dist_version => '1.10',       #  Different to version in the file.
