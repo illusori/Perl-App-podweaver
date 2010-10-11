@@ -25,19 +25,20 @@ sub SUCCESS_CHANGED()   { 2; }
 sub weave_file
 {
     my ( $self, %input ) = @_;
-    my ( $file, $no_backup, $write_to_dot_new );
+    my ( $file, $no_backup, $write_to_dot_new, $weaver );
     my ( $perl, $ppi_document, $pod_after_end, @pod_tokens, $pod_str,
          $pod_document, %weave_args, $new_pod, $end, $new_perl,
          $output_file, $backup_file, $fh, $module_info );
 
-    unless( $file = delete $input{ file } )
+    unless( $file = delete $input{ filename } )
     {
         $log->errorf( 'Missing file parameter in args %s', \%input )
             if $log->is_error();
         return( FAIL );
     }
     $no_backup        = delete $input{ no_backup };
-    $write_to_dot_new = delete $input{ new }
+    $write_to_dot_new = delete $input{ new };
+    $weaver           = delete $input{ weaver };
 
     #  From here and below is mostly hacked out from
     #    Dist::Zilla::Plugin::PodWeaver
@@ -100,12 +101,12 @@ sub weave_file
     {
         $weave_args{ version } = $module_info->{ version };
     }
-    elsif( defined( $input->{ dist_version } ) )
+    elsif( defined( $input{ dist_version } ) )
     {
         $log->warningf( "Unable to parse version in '%s', " .
-            "using dist_version '%s'", $file, $input->{ dist_version } )
+            "using dist_version '%s'", $file, $input{ dist_version } )
             if $log->is_warning();
-        $weave_args{ version } = $input->{ dist_version };
+        $weave_args{ version } = $input{ dist_version };
     }
     else
     {
@@ -144,11 +145,28 @@ sub weave_file
     $ppi_document->prune( 'PPI::Statement::Data' );
 
     $new_perl = $ppi_document->serialize;
-    $new_perl =
-        $end ? ( $pod_after_end ?
-        "$new_perl$end$new_pod" :
-        "$new_perl\n\n$new_pod\n\n$end" ) :
-        "$new_perl\n__END__\n$new_pod\n";
+
+    $new_perl =~ s/\n+$//;
+    $new_perl .= "\n";
+
+    $new_pod  =~ s/\n+$//;
+    $new_pod  =~ s/^\n+//;
+    $new_pod  .= "\n";
+
+    if( not $end )
+    {
+        $end = "__END__\n\n";
+        $pod_after_end = 1;
+    }
+
+    if( $pod_after_end )
+    {
+        $new_perl = "$new_perl\n$end$new_pod";
+    }
+    else
+    {
+        $new_perl = "$new_perl\n$new_pod\n$end";
+    }
 
     if( $perl eq $new_perl )
     {
@@ -173,7 +191,7 @@ sub weave_file
     $fh = IO::File->new( $output_file, $write_to_dot_new ? '>' : '+<' );
     unless( $fh )
     {
-        $log->errorf( "Unable to write to '%s' for '%s': %s"
+        $log->errorf( "Unable to write to '%s' for '%s': %s",
             $output_file, $file, $! )
             if $log->is_error();
         return( FAIL );
