@@ -418,6 +418,22 @@ subsequently.
 
 =head1 METHODS
 
+=begin private
+
+=head2 B<FAIL>
+
+Indicates the file failed to be woven.
+
+=head2 B<SUCCESS_UNCHANGED>
+
+Indicates the file was successfully woven but resulted in no changes.
+
+=head2 B<SUCCESS_CHANGED>
+
+Indicates the file was successfully woven and contained changes.
+
+=end private
+
 =head2 I<$success> = B<< App::podweaver->weave_file( >> I<%options> B<)>
 
 Runs L<Pod::Weaver> on the given file, merges the generated Pod back
