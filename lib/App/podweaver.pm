@@ -9,6 +9,9 @@ use Carp;
 use CPAN::Meta;
 use IO::File;
 use File::Copy;
+use File::Find::Rule;
+use File::Find::Rule::Perl;
+use File::Find::Rule::VCS;
 use File::Slurp ();
 use Log::Any qw/$log/;
 use Module::Build::ModuleInfo;
@@ -317,6 +320,15 @@ sub get_weaver
         "this will most likely insert duplicate sections" )
         if $log->is_warning();
     return( Pod::Weaver->new_with_default_config() );
+}
+
+sub find_files_to_weave
+{
+    return(
+        File::Find::Rule->ignore_vcs
+                        ->perl_file
+                        ->in( grep { -d $_ } qw/lib bin script/ )
+        );
 }
 
 1;

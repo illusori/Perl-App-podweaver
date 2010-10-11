@@ -27,6 +27,9 @@ provides:
     version: 0.99_01
 requires:
   CPAN::Meta: 0
+  File::Find::Rule: 0
+  File::Find::Rule::Perl: 0
+  File::Find::Rule::VCS: 0
   File::Slurp: 0
   IO::File: 0
   Log::Any: 0
