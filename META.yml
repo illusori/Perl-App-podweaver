@@ -3,6 +3,14 @@ abstract: 'Run Pod::Weaver on the files within a distribution.'
 author:
   - 'Sam Graham <libapp-podweaver-perl@illusori.co.uk>'
 build_requires:
+  File::Copy: 0
+  File::Spec: 0
+  File::Temp: 0.18
+  Pod::Elemental::Selectors: 0
+  Pod::Elemental::Transformer::Nester: 0
+  Software::License::Perl_5: 0
+  Test::Differences: 0
+  Test::MockObject: 0
   Test::More: 0
 configure_requires:
   Module::Build: 0.36
@@ -21,6 +29,7 @@ requires:
   File::Slurp: 0
   IO::File: 0
   Log::Any: 0
+  Module::Build::ModuleInfo: 0
   PPI::Document: 0
   Pod::Elemental: 0
   Pod::Elemental::Transformer::Pod5: 0
