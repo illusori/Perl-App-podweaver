@@ -303,6 +303,22 @@ sub get_dist_info
     return( $dist_info );
 }
 
+sub get_weaver
+{
+    if( -r 'weaver.ini' )
+    {
+        $log->debug( "Initializing weaver from ./weaver.ini" )
+            if $log->is_debug();
+        return( Pod::Weaver->new_from_config( {
+            root => '',
+            } ) );
+    }
+    $log->warning( "No ./weaver.ini found, using Pod::Weaver defaults, " .
+        "this will most likely insert duplicate sections" )
+        if $log->is_warning();
+    return( Pod::Weaver->new_with_default_config() );
+}
+
 1;
 
 __END__
