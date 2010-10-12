@@ -37,6 +37,9 @@ my $builder = Module::Build->new(
         'PPI::Document'  => 0,
         'Try::Tiny'   => 0,
     },
+    recommends => {
+        'Pod::Weaver::PluginBundle::ReplaceBoilerplate' => 0,
+    },
     add_to_cleanup      => [ 'App-podweaver-*' ],
     sign => 1,
     dynamic_config => 0,
