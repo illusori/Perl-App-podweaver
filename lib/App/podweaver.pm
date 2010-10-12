@@ -13,6 +13,7 @@ use File::Find::Rule;
 use File::Find::Rule::Perl;
 use File::Find::Rule::VCS;
 use File::Slurp ();
+use File::Spec;
 use Log::Any qw/$log/;
 use Module::Build::ModuleInfo;
 use Pod::Elemental;
@@ -215,25 +216,23 @@ sub weave_file
 sub get_dist_info
 {
     my ( $self, %options ) = @_;
+    my ( $dist_info, $dist_root, $meta_file );
 
-    my $dist_info = {};
+    $dist_root = $options{ dist_root } || '.';    
 
-    if( -r 'META.json' )
+    $dist_info = {};
+
+    if( -r ( $meta_file = File::Spec->catfile( $dist_root, 'META.json' ) ) or
+        -r ( $meta_file = File::Spec->catfile( $dist_root, 'META.yml'  ) ) )
     {
-        $log->debug( "Reading META.json" )
+        $log->debugf( "Reading '%s'", $meta_file )
             if $log->is_debug();
-        $dist_info->{ meta } = CPAN::Meta->load_file( 'META.json' );
-    }
-    elsif( -r 'META.yml' )
-    {
-        $log->debug( "Reading META.yml" )
-            if $log->is_debug();
-        $dist_info->{ meta } = CPAN::Meta->load_file( 'META.yml' );
+        $dist_info->{ meta } = CPAN::Meta->load_file( $meta_file );
     }
     else
     {
-        $log->warning( "No META.json or META.yml file found, " .
-            "are you running in a distribution directory?" )
+        $log->warningf( "No META.json or META.yml file found, " .
+            "is '%s' a distribution directory?", $dist_root )
             if $log->is_warning();
     }
 
@@ -314,27 +313,41 @@ sub get_dist_info
 
 sub get_weaver
 {
-    if( -r 'weaver.ini' )
+    my ( $self, %options ) = @_;
+    my ( $dist_root, $config_file );
+
+    $dist_root = $options{ dist_root } || '.';    
+    if( -r ( $config_file = File::Spec->catfile( $dist_root, 'weaver.ini' ) ) )
     {
         $log->debug( "Initializing weaver from ./weaver.ini" )
             if $log->is_debug();
         return( Pod::Weaver->new_from_config( {
-            root => '',
+            root => $dist_root,
             } ) );
     }
-    $log->warning( "No ./weaver.ini found, using Pod::Weaver defaults, " .
-        "this will most likely insert duplicate sections" )
+    $log->warningf( "No '%s' found, using Pod::Weaver defaults, " .
+        "this will most likely insert duplicate sections",
+        $config_file )
         if $log->is_warning();
     return( Pod::Weaver->new_with_default_config() );
 }
 
 sub find_files_to_weave
 {
+    my ( $self, %options ) = @_;
+    my ( $dist_root );
+
+    $dist_root = $options{ dist_root } || '.';    
+
     return(
         File::Find::Rule->ignore_vcs
                         ->not_name( qr/~$/ )
                         ->perl_file
-                        ->in( grep { -d $_ } qw/lib bin script/ )
+                        ->in(
+                            grep { -d $_ }
+                            map  { File::Spec->catfile( $dist_root, $_ ) }
+                            qw/lib bin script/
+                            )
         );
 }
 
@@ -418,7 +431,7 @@ subsequently.
 
 =head1 METHODS
 
-=begin private
+=begin :private
 
 =head2 B<FAIL>
 
@@ -432,7 +445,7 @@ Indicates the file was successfully woven but resulted in no changes.
 
 Indicates the file was successfully woven and contained changes.
 
-=end private
+=end :private
 
 =head2 I<$success> = B<< App::podweaver->weave_file( >> I<%options> B<)>
 
@@ -445,6 +458,8 @@ and either C<< App::podweaver::SUCCESS_UNCHANGED >> or
 C<< App::podweaver::SUCCESS_CHANGED >> on success,
 depending on whether changes needed to be made as a result of
 the weaving.
+
+Currently these constants are not exportable.
 
 The following options configure C<< App::podweaver->weave_file() >>:
 
@@ -481,7 +496,7 @@ Any additional options are passed untouched to L<Pod::Weaver>.
 =head2 I<$dist_info> = B<< App::podweaver->get_dist_info( >> I<%options> B<)>
 
 Attempts to extract the information needed by L<Pod::Weaver>
-about the distribution found in the current working directory.
+about the distribution.
 
 It does this by examining any C<META.json> or C<META.yml> file
 it finds, and by expanding various fields found within.
@@ -489,6 +504,13 @@ it finds, and by expanding various fields found within.
 Valid options are:
 
 =over
+
+=item B<< dist_root => >> I<$directory> (default: current working directory)
+
+Treats I<$directory> as the root directory of the distribution,
+where the C<META.json> or C<META.yml> file should be found.
+
+If not supplied, this will default to the current working directory.
 
 =item B<< antispam => >> I<$string>
 
@@ -504,16 +526,39 @@ of C<< nobody@127.0.0.1 >> into C<< nobody NOSPAM 127.0.0.1 >>.
 =head2 I<$weaver> = B<< App::podweaver->get_weaver( >> I<%options> B<)>
 
 Builds a L<Pod::Weaver> instance, attemping to find a C<weaver.ini>
-in the current working directory.
+in the distribution root directory.
 
-At present any options supplied in I<%options> are ignored.
+Valid options are:
 
-=head2 I<@files> = B<< App::podweaver->find_files_to_weave() >>
+=over
+
+=item B<< dist_root => >> I<$directory> (default: current working directory)
+
+Treats I<$directory> as the root directory of the distribution,
+where the C<weaver.ini> file should be found.
+
+If not supplied, this will default to the current working directory.
+
+=back
+
+=head2 I<@files> = B<< App::podweaver->find_files_to_weave( >> I<%options> B<)>
 
 Invokes L<File::Find::Rule>, L<File::Find::Rule::VCS> and
 L<File::Find::Rule::Perl> to return a list of perl files that are
 candidates to run L<Pod::Weaver> on in the C<lib>, C<bin> and C<script>
-dirs of the current working directory.
+dirs of the distribution directory.
+
+Valid options are:
+
+=over
+
+=item B<< dist_root => >> I<$directory> (default: current working directory)
+
+Treats I<$directory> as the root directory of the distribution.
+
+If not supplied, this will default to the current working directory.
+
+=back
 
 =head2 B<< App::podweaver->weave_distribution( >> I<%options> B<)>
 
@@ -535,22 +580,6 @@ to run on files that will trigger this problem.
 =item META.json/yml bootstrap is a mess
 
 The whole bootstrap issue with META.json/yml is ugly.
-
-=item Distribution version used not module $VERSION
-
-Currently there's a quick and nasty hack supplying the distribution
-version to L<Pod::Weaver::Plugin::Version> for each module, rather
-than the version specified in that module.
-This will be incorrect if your version numbers aren't in sync for
-some reason.
-
-=item All the code is in the script, should move into the module
-
-All the code for "doing stuff" is in the script rather than in
-this module, which makes it impossible to reuse, and rather hard
-to test.
-Stuff that modifies your source code B<really> ought to have some
-tests.
 
 =back
 
