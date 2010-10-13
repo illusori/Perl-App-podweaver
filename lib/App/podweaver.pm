@@ -22,7 +22,7 @@ use Pod::Weaver;
 use PPI::Document;
 use Try::Tiny;
 
-our $VERSION = '0.99_01';
+our $VERSION = '0.99_02';
 
 sub FAIL()              { 0; }
 sub SUCCESS_UNCHANGED() { 1; }
@@ -385,7 +385,7 @@ App::podweaver - Run Pod::Weaver on the files within a distribution.
 
 =head1 VERSION
 
-version 0.99_01
+version 0.99_02
 
 =head1 SYNOPSIS
 
