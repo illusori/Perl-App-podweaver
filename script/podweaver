@@ -17,37 +17,69 @@ use Log::Any::Adapter;
 
 use App::podweaver;
 
+our $VERSION = '0.99_02';
+
 # ---------------------------------------------------------------------------
 
 my $help    = 0;
 my $man     = 0;
+my $version = 0;
 
 my %options = (
     new       => 0,
     no_backup => 0,
     antispam  => '',
+    verbose   => 0,
     );
 
-my $verbose          = 0;
+if( my $config = App::podweaver->config() )
+{
+    foreach my $option ( keys( %{$config->{ _ }} ) )
+    {
+        if( exists( $options{ $option } ) )
+        {
+            $options{ $option } = $config->{ _ }->{ $option };
+        }
+        else
+        {
+            warn "Ignoring unsupported config option '$option' in " .
+                App::podweaver->_config_file(), "\n";
+        }
+    }
+}
 
 Getopt::Long::Configure( 'gnu_getopt' );
 Getopt::Long::GetOptions(
     'help|?|h'                => \$help,
     'man'                     => \$man,
-    'verbose|v+'              => \$verbose,
+    'version'                 => \$version,
+    'verbose|v+'              => \$options{ verbose },
     'new'                     => \$options{ new },
-    'nobackup'                => \$options{ no_backup },
+    'no_backup|nobackup'      => \$options{ no_backup },
     'antispam=s'              => \$options{ antispam },
     ) or pod2usage( 2 );
 
 pod2usage( 1 ) if $help;
 pod2usage( -exitstatus => 0, -verbose => 2 ) if $man;
 
+if( $version )
+{
+    print "podweaver, version $VERSION\n\n",
+        "Config file: ", App::podweaver->_config_file(), "\n";
+    exit( 0 );
+}
+
 # ---------------------------------------------------------------------------
+
+my ( $verbose );
+
+$verbose = delete $options{ verbose };
+$verbose = 2 - $verbose;
+$verbose = 0 if $verbose < 0;
 
 Log::Any::Adapter->set( 'Dispatch',
     outputs => [
-        [ 'Screen', min_level => 2 - $verbose, newline => 1, ],
+        [ 'Screen', min_level => $verbose, newline => 1, ],
         ],
     );
 
@@ -73,10 +105,11 @@ podweaver [options]
  Options:
    -v, --verbose     increase verbosity
    --new             write to *.new files rather than overwriting existing
-   --nobackup        skip generating *.bak files when editing files
+   --no_backup       skip generating *.bak files when editing files
    --antispam=str    replace @ in author emails with 'str'.
    --help            brief help message
    --man             full documentation
+   --version         display version information and exit
 
 =head1 OPTIONS
 
@@ -91,7 +124,7 @@ overwriting the original.
 When B<--new> is supplied, no *.bak backup of the original is created (since
 the original is left untouched.)
 
-=item B<--nobackup>
+=item B<--no_backup>
 
 Skips the production of *.bak backups for any changed files.
 Be warned, this could result in loss of the file contents if anything goes
@@ -116,6 +149,11 @@ Print a brief help message and exits.
 =item B<--man>
 
 Prints the manual page and exits.
+
+=item B<--version>
+
+Prints version information and the location of the config file and
+exits.
 
 =back
 
@@ -152,6 +190,31 @@ modules or scripts that should be woven.
 This should probably be configurable.
 
 Please see the documentation in L<App::podweaver> for bugs and issues.
+
+=head1 CONFIGURATION FILE
+
+If you find yourself using the same command-line options repeatedly
+you can set them as defaults in an application configuration file.
+
+This file is located in C<$HOME/.app_podweaver/podweaver.ini> for
+UNIX-based operating systems, and
+C<~/Local Settings/Application Data/App-podweaver/podweaver.ini> under Windows.
+
+You can find the exact location of your configuration file using
+the B<--version> option.
+
+The configuration file follows L<Config::Tiny> style .ini format and
+consists of command-line option names for keys, for example:
+
+  antispam  = BLAHBLAH
+  no_backup = 1
+  verbose   = 2
+
+This would be as if you provided C<< --antispam=BLAHBLAH --no_baackup -vv >>
+on the command-line.
+
+Any options supplied on the command-line will override those supplied
+within the configuration file.
 
 =head1 AUTHOR
 

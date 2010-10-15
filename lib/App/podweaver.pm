@@ -6,9 +6,11 @@ use warnings;
 use strict;
 
 use Carp;
+use Config::Tiny;
 use CPAN::Meta;
 use IO::File;
 use File::Copy;
+use File::HomeDir;
 use File::Find::Rule;
 use File::Find::Rule::Perl;
 use File::Find::Rule::VCS;
@@ -373,6 +375,63 @@ sub weave_distribution
     }
 }
 
+sub _config_dir
+{
+    my ( $self ) = @_;
+    my ( $leaf_dir, $config_dir );
+
+    #  Following lifted from File::UserDir.
+    #  I'd use that directly but it forces creation and population of the dir.
+
+    # Derive from the caller based on HomeDir naming scheme
+    my $scheme = $File::HomeDir::IMPLEMENTED_BY or
+        die "Failed to find File::HomeDir naming scheme";
+    if( $scheme->isa( 'File::HomeDir::Darwin' ) or
+        $scheme->isa( 'File::HomeDir::Windows' ) )
+    {
+        $leaf_dir = 'App-podweaver';
+    }
+    elsif( $scheme->isa('File::HomeDir::Unix') )
+    {
+        $leaf_dir = '.app-podweaver';
+    }
+    else
+    {
+        die "Unsupported HomeDir naming scheme $scheme";
+    }
+
+    $config_dir = File::Spec->catdir(
+        File::HomeDir->my_data(),
+        $leaf_dir
+        );
+
+    return( $config_dir );
+}
+
+sub _config_file
+{
+    my ( $self ) = @_;
+    my ( $config_dir, $config_file );
+
+    return( undef ) unless $config_dir = $self->_config_dir();
+
+    $config_file = File::Spec->catfile( $config_dir, 'podweaver.ini' );
+    return( $config_file );
+}
+
+sub config
+{
+    my ( $self ) = @_;
+    my ( $config_file, $config );
+
+    $config_file = $self->_config_file();
+    return( {} ) unless $config_file and -e $config_file;
+    $config = Config::Tiny->read( $config_file ) or
+        die "Error reading '$config_file': " . Config::Tiny->errstr();
+
+    return( $config );
+}
+
 1;
 
 __END__
@@ -565,6 +624,15 @@ If not supplied, this will default to the current working directory.
 Rolls all the other methods together to run L<Pod::Weaver> on the
 appropriate files within the distribution found in the current
 working directory.
+
+=head2 I<$config> = B<< App::podweaver->config() >>
+
+Retrieves the L<Config::Tiny> contents of the user's config file for
+the application, as found in the C<podweaver.ini> file in the usual
+place for user configuration files for your OS.
+
+(C<~/.app_podweaver/podweaver.ini> for UNIX, C<~/Local Settings/Application
+Data/App-podweaver/podweaver.ini> under Windows.)
 
 =head1 KNOWN ISSUES AND BUGS
 
