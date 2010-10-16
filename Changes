@@ -2,6 +2,7 @@ Revision history for App-podweaver
 
 0.99_02 Version released at .  *** Development version. ***
         Added optional configuration file for command-line defaults.
+        Remove "no package found" hacks: new Pod::Weaver handles this fine.
 
 0.99_01 Version released at 2010-10-12-13:25.  *** Development version. ***
         Initial release.

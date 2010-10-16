@@ -65,14 +65,6 @@ sub weave_file
         return( FAIL );
     }
 
-    #  Pod::Weaver::Section::Name croaks if there's no package line.
-    unless( $ppi_document->find_first( 'PPI::Statement::Package' ) )
-    {
-        $log->errorf( "Unable to find package declaration in '%s'", $file )
-            if $log->is_error();
-        return( FAIL );
-    }
-
     #  If they have some pod after __END__ then assume it's safe to put
     #  it all there.
     $pod_after_end =
@@ -637,13 +629,6 @@ Data/App-podweaver/podweaver.ini> under Windows.)
 =head1 KNOWN ISSUES AND BUGS
 
 =over
-
-=item Currently skips files without C<package> declaration.
-
-L<Pod::Weaver::Plugin::Name> croaks if there's no C<package> declaration
-in the file, preventing L<Pod::Weaver> from running over scripts and
-C<.pod> files at this time.  L<App::podweaver> currently avoids trying
-to run on files that will trigger this problem.
 
 =item META.json/yml bootstrap is a mess
 

@@ -23,7 +23,8 @@ my $builder = Module::Build->new(
     requires => {
         'Config::Tiny'   => 0,
         'CPAN::Meta'     => 0,
-        'Pod::Weaver'    => 0,
+	# 3.101631 for a Name section plugin that doesn't require package line.
+        'Pod::Weaver'    => 3.101631,
         'File::HomeDir'  => 0,
         'File::Find::Rule'       => 0,
         'File::Find::Rule::Perl' => 0,
