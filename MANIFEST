@@ -10,6 +10,7 @@ t/00-load.t
 t/30-weave-file.t
 t/40-dist-info.t
 t/50-files-to-weave.t
+t/80-script.t
 t/90-check-changes.t
 t/91-fixme.t
 t/92-hasversion.t
