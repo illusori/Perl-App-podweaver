@@ -44,7 +44,7 @@ requires:
   PPI::Document: 0
   Pod::Elemental: 0
   Pod::Elemental::Transformer::Pod5: 0
-  Pod::Weaver: 0
+  Pod::Weaver: 3.101632
   Try::Tiny: 0
 resources:
   license: http://dev.perl.org/licenses/
