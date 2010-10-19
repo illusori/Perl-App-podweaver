@@ -1,5 +1,8 @@
 Revision history for App-podweaver
 
+0.99_03 Version released at .  *** Development version. ***
+        Added missing Test::Command to build_requires.
+
 0.99_02 Version released at 2010-10-18-10:42.  *** Development version. ***
         Added optional configuration file for command-line defaults.
         Added basic tests for the command-line script.

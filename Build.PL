@@ -9,6 +9,7 @@ my $builder = Module::Build->new(
     dist_version_from   => 'lib/App/podweaver.pm',
     script_files        => 'script',
     build_requires => {
+        'Test::Command'     => 0.08,
         'Test::More'        => 0,
         'Test::MockObject'  => 0,
         'Test::Differences' => 0,

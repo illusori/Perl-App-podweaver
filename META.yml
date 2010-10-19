@@ -9,6 +9,7 @@ build_requires:
   Pod::Elemental::Selectors: 0
   Pod::Elemental::Transformer::Nester: 0
   Software::License::Perl_5: 0
+  Test::Command: 0.08
   Test::Differences: 0
   Test::MockObject: 0
   Test::More: 0
