@@ -40,7 +40,7 @@ requires:
   Log::Any: 0
   Log::Any::Adapter: 0
   Log::Any::Adapter::Dispatch: 0
-  Module::Build::ModuleInfo: 0
+  Module::Metadata: 1
   PPI::Document: 0
   Pod::Elemental: 0
   Pod::Elemental::Transformer::Pod5: 0

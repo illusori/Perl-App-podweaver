@@ -1,5 +1,8 @@
 Revision history for App-podweaver
 
+0.99_04 Version released at .  *** Development version. ***
+        Move from deprecated Module::Build::ModuleInfo to Module::Metadata.
+
 0.99_03 Version released at 2010-10-19-17:27.  *** Development version. ***
         Added missing Test::Command to build_requires.
         Remove "no package found" hacks: new Pod::Weaver handles this fine.

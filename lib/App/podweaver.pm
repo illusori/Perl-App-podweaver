@@ -17,7 +17,7 @@ use File::Find::Rule::VCS;
 use File::Slurp ();
 use File::Spec;
 use Log::Any qw/$log/;
-use Module::Build::ModuleInfo;
+use Module::Metadata;
 use Pod::Elemental;
 use Pod::Elemental::Transformer::Pod5;
 use Pod::Weaver;
@@ -101,10 +101,10 @@ sub weave_file
         filename     => $file,
         );
 
-    $module_info = Module::Build::ModuleInfo->new_from_file( $file );
-    if( $module_info and defined( $module_info->{ version } ) )
+    $module_info = Module::Metadata->new_from_file( $file );
+    if( $module_info and defined( $module_info->version() ) )
     {
-        $weave_args{ version } = $module_info->{ version };
+        $weave_args{ version } = $module_info->version();
     }
     elsif( defined( $input{ dist_version } ) )
     {
@@ -537,7 +537,7 @@ the original.
 =item B<< dist_version => >> I<$version>
 
 If no C<$VERSION> can be parsed from the file by
-L<Module::Build::ModuleInfo>, the version supplied in
+L<Module::Metadata>, the version supplied in
 C<dist_version> will be used as a fallback.
 
 =back
