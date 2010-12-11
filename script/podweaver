@@ -18,7 +18,7 @@ use Log::Any::Adapter;
 
 use App::podweaver;
 
-our $VERSION = '0.99_03';
+our $VERSION = '0.99_04';
 
 # ---------------------------------------------------------------------------
 
@@ -96,7 +96,7 @@ podweaver - Run Pod::Weaver on a file or distribution.
 
 =head1 VERSION
 
-version 0.99_03
+version 0.99_04
 
 =head1 SYNOPSIS
 
