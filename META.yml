@@ -25,7 +25,7 @@ name: App-podweaver
 provides:
   App::podweaver:
     file: lib/App/podweaver.pm
-    version: 0.99_03
+    version: 0.99_04
 recommends:
   Pod::Weaver::PluginBundle::ReplaceBoilerplate: 0
 requires:
@@ -49,4 +49,3 @@ requires:
 resources:
   license: http://dev.perl.org/licenses/
 version: 0.99_04
-
