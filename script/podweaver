@@ -216,6 +216,10 @@ on the command-line.
 Any options supplied on the command-line will override those supplied
 within the configuration file.
 
+=head1 SEE ALSO
+
+L<Pod::Weaver>, L<App::podweaver>.
+
 =head1 AUTHOR
 
 Sam Graham <libapp-podweaver-perl BLAHBLAH illusori.co.uk>

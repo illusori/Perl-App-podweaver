@@ -642,6 +642,10 @@ Please report any bugs or feature requests to C<bug-app-podweaver at rt.cpan.org
 the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=App-podweaver>.  I will be notified, and then you'll
 automatically be notified of progress on your bug as I make changes.
 
+=head1 SEE ALSO
+
+L<Pod::Weaver>, L<podweaver>.
+
 =head1 SUPPORT
 
 You can find documentation for this module with the perldoc command.
