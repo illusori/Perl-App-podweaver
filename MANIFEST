@@ -40,3 +40,4 @@ t/test_files/30-weave-file/no-pod-no-end-with-data.out.txt
 t/test_files/30-weave-file/no-pod-with-end-no-data.in.txt
 t/test_files/30-weave-file/no-pod-with-end-no-data.out.txt
 weaver.ini
+META.json

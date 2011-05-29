@@ -44,6 +44,11 @@ my $builder = Module::Build->new(
     recommends => {
         'Pod::Weaver::PluginBundle::ReplaceBoilerplate' => 0,
     },
+    meta_merge => {
+        'resources' => {
+            'repository' => 'http://github.com/illusori/Perl-App-podweaver',
+            },
+        },
     add_to_cleanup      => [ 'App-podweaver-*' ],
     sign => 1,
     dynamic_config => 0,

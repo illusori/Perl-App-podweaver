@@ -14,9 +14,9 @@ build_requires:
   Test::MockObject: 0
   Test::More: 0
 configure_requires:
-  Module::Build: 0.36
+  Module::Build: 0.38
 dynamic_config: 0
-generated_by: 'Module::Build version 0.3607'
+generated_by: 'Module::Build version 0.38, CPAN::Meta::Converter version 2.110930'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -25,7 +25,7 @@ name: App-podweaver
 provides:
   App::podweaver:
     file: lib/App/podweaver.pm
-    version: 0.99_04
+    version: 0.99_05
 recommends:
   Pod::Weaver::PluginBundle::ReplaceBoilerplate: 0
 requires:
@@ -48,5 +48,5 @@ requires:
   Try::Tiny: 0
 resources:
   license: http://dev.perl.org/licenses/
+  repository: http://github.com/illusori/Perl-App-podweaver
 version: 0.99_05
-
