@@ -452,6 +452,19 @@ default L<Pod::Weaver> behaviour of repeatedly appending.
 You can configure the L<Pod::Weaver> invocation by providinng a
 C<weaver.ini> file in the root directory of your distribution.
 
+=begin readme
+
+=head1 INSTALLATION
+
+To install this module, run the following commands:
+
+  perl Build.PL
+  ./Build
+  ./Build test
+  ./Build install
+
+=end readme
+
 =head1 BOOTSTRAPPING WITH META.json/META.yml
 
 Since the META.json/yml file is often generated with an abstract extracted
@@ -479,6 +492,8 @@ L<App::podweaver> again to produce the missing sections:
 This should only be neccessary on newly created distributions as
 both the META and the neccessary POD abstract should be present
 subsequently.
+
+=for readme stop
 
 =head1 METHODS
 
@@ -645,6 +660,8 @@ automatically be notified of progress on your bug as I make changes.
 =head1 SEE ALSO
 
 L<Pod::Weaver>, L<podweaver>.
+
+=for readme continue
 
 =head1 SUPPORT
 

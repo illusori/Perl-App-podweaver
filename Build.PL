@@ -50,6 +50,7 @@ my $builder = Module::Build->new(
             },
         },
     add_to_cleanup      => [ 'App-podweaver-*' ],
+    create_readme => 1,
     sign => 1,
     dynamic_config => 0,
 );
