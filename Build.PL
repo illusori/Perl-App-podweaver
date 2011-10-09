@@ -8,6 +8,9 @@ my $builder = Module::Build->new(
     dist_author         => q{Sam Graham <libapp-podweaver-perl@illusori.co.uk>},
     dist_version_from   => 'lib/App/podweaver.pm',
     script_files        => 'script',
+    configure_requires => {
+	'Module::Build'     => 0.38,
+    },
     build_requires => {
         'Test::Command'     => 0.08,
         'Test::More'        => 0,
