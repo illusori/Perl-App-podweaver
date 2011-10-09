@@ -1,9 +1,11 @@
 Revision history for App-podweaver
 
-1.00    Version released at 2011-10-09-21:21.
+1.00    Version released at 2011-10-09-21:44.
         Updated copyright year.
         Added SEE ALSO section to POD.
         Make Build.PL autogenerate README from POD.
+        Add configure_requires to Build.PL.
+        Use /usr/bin/env perl shebang to play nice with perlbrew.
 
 0.99_04 Version released at 2010-12-11-17:06.  *** Development version. ***
         Move from deprecated Module::Build::ModuleInfo to Module::Metadata.
