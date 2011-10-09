@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 
 # ABSTRACT: Run Pod::Weaver on a file or distribution.
 # PODNAME: podweaver
