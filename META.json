@@ -4,7 +4,7 @@
       "Sam Graham <libapp-podweaver-perl@illusori.co.uk>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Module::Build version 0.38, CPAN::Meta::Converter version 2.110930",
+   "generated_by" : "Module::Build version 0.38, CPAN::Meta::Converter version 2.112150",
    "license" : [
       "perl_5"
    ],
@@ -61,10 +61,10 @@
    "provides" : {
       "App::podweaver" : {
          "file" : "lib/App/podweaver.pm",
-         "version" : "0.99_05"
+         "version" : "1.00"
       }
    },
-   "release_status" : "testing",
+   "release_status" : "stable",
    "resources" : {
       "license" : [
          "http://dev.perl.org/licenses/"
@@ -73,5 +73,5 @@
          "url" : "http://github.com/illusori/Perl-App-podweaver"
       }
    },
-   "version" : "0.99_05"
+   "version" : "1.00"
 }

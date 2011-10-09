@@ -2,7 +2,7 @@ NAME
     App::podweaver - Run Pod::Weaver on the files within a distribution.
 
 VERSION
-    version 0.99_05
+    version 1.00
 
 SYNOPSIS
     App::podweaver provides a mechanism to run Pod::Weaver over the files
